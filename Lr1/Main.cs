@@ -15,12 +15,12 @@ namespace Lr1
         private void button1_Click(object sender, EventArgs e)
         {
 
-            var keyWord = textBox1.Text;
+            var keyWord = textBox1.Text.ToUpper();
             var wordK = Convert.ToInt32(numericUpDown1.Value);
 
             var alphabet = Alphabet.Select(x => x.ToString()).ToList();
 
-            var text = richTextBox1.Text.Trim();
+            var text = richTextBox1.Text.Trim().ToUpper();
 
             var newAlphabet = GenCezarAlphabet(alphabet, keyWord, wordK);
 
@@ -74,17 +74,18 @@ namespace Lr1
             newAlphabet.AddRange(startPartToAdd);
             newAlphabet.AddRange(keyWordAsList);
             newAlphabet.AddRange(partToAddFromFiltredAlphabet);
+            Debug.WriteLine("Новый алфавит: " + String.Join("", newAlphabet));
             return newAlphabet;
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var keyWord = textBox1.Text;
+            var keyWord = textBox1.Text.ToUpper();
             var wordK = Convert.ToInt32(numericUpDown1.Value);
 
             var alphabet = Alphabet.Select(x => x.ToString()).ToList();
 
-            var text = richTextBox1.Text.Trim();
+            var text = richTextBox1.Text.Trim().ToUpper();
 
             var newAlphabet = GenCezarAlphabet(alphabet, keyWord, wordK);
 
@@ -135,12 +136,29 @@ namespace Lr1
                         }
                     }
                 }
+                PrintArrayToDebug("Code table", tmpArray);
+
 
 
             }
 
             return rez;
 
+        }
+
+        private void PrintArrayToDebug(string text, char[,] array)
+        {
+            Debug.WriteLine(text);
+
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                for (int l = 0; l < array.GetLength(1); l++)
+                {
+                    Debug.Write("["+array[i,l]+"] ");
+                }
+                Debug.WriteLine("");
+
+            }
         }
 
         private string DeCodeTable(string text, int columns, int rows)
@@ -183,6 +201,7 @@ namespace Lr1
                         }
                     }
                 }
+                PrintArrayToDebug("Decode table", tmpArray);
 
 
             }
