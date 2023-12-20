@@ -3,12 +3,14 @@
     using System;
 
     using System;
+    using System.Text;
 
     class Program
     {
         static void Main()
         {
-            // Инициализация первой ступени (7-разрядный линейный сдвиговый регистр)
+            Console.OutputEncoding = Encoding.UTF8;
+
             ushort firstStageRegister = (ushort)0xACE1u; // Произвольное начальное значение
 
             // Инициализация второй ступени (конгруэнтный генератор)
@@ -41,7 +43,7 @@
         static ulong CongruentialGenerator(ulong state)
         {
             // Коэффициент "a" - большое простое число, обеспечивающее хорошую статистику
-            const ulong a = 6364136223846793005;
+            const ulong a = 65521;
 
             // Коэффициент "c" - константа, обеспечивающая разнообразие последовательности
             const ulong c = 1;
@@ -92,7 +94,7 @@
         // Преобразование числа в строку бинарного представления
         static string ToBinaryString(ulong value)
         {
-            return Convert.ToString((long)value, 2).PadLeft(64, '0');
+            return Convert.ToString((long)value, 2).PadLeft(16, '0');
         }
 
         // Преобразование строки в бинарное представление
@@ -101,7 +103,7 @@
             string binaryString = "";
             foreach (char c in text)
             {
-                binaryString += Convert.ToString(c, 2).PadLeft(8, '0') + " ";
+                binaryString += Convert.ToString(c, 2).PadLeft(8, '0');
             }
             return binaryString.Trim();
         }
