@@ -5,109 +5,174 @@
     using System;
     using System.Text;
 
-    class Program
+    using System;
+
+    class LFSR
     {
-        static void Main()
+        private int register;
+
+        public LFSR()
         {
-            Console.OutputEncoding = Encoding.UTF8;
-
-            ushort firstStageRegister = (ushort)0xACE1u; // Произвольное начальное значение
-
-            // Инициализация второй ступени (конгруэнтный генератор)
-            ulong secondStageSeed = GenerateSecondStageSeed(firstStageRegister);
-            ulong secondStageState = secondStageSeed;
-
-            // Генерация гаммы и гаммирование текста
-            string plaintext = "Hello, World!";
-            Console.WriteLine($"Исходный текст: {plaintext}");
-            Console.WriteLine("Бинарное представление исходного текста: " + StringToBinary(plaintext));
-
-            string ciphertext = Encrypt(plaintext, firstStageRegister, secondStageState);
-            Console.WriteLine($"Зашифрованный текст: {ciphertext}");
-            Console.WriteLine("Бинарное представление зашифрованного текста: " + StringToBinary(ciphertext));
-
-            string decryptedText = Decrypt(ciphertext, firstStageRegister, secondStageState);
-            Console.WriteLine($"Расшифрованный текст: {decryptedText}");
-            Console.WriteLine("Бинарное представление расшифрованного текста: " + StringToBinary(decryptedText));
+            Random random = new Random();
+            register = random.Next(128); // 2^7 for 7-bit register
         }
 
-        // Генерация 64-битного значения для второй ступени
-        static ulong GenerateSecondStageSeed(ushort firstStageRegister)
+        public int Shift()
         {
-            ulong seed = firstStageRegister;
-            seed <<= 9; // Сдвиг на 9 бит для получения 16 бит значения
-            return seed;
+            int newBit = (register >> 6) ^ ((register >> 5) & 1);
+            register = (newBit << 6) | (register >> 1);
+            return newBit;
         }
 
-        // Конгруэнтный генератор для второй ступени
-        static ulong CongruentialGenerator(ulong state)
+        public Tuple<int, Tuple<string, int>[]> Generate16Bits()
         {
-            // Коэффициент "a" - большое простое число, обеспечивающее хорошую статистику
-            const ulong a = 65521;
+            int output = 0;
+            Tuple<string, int>[] stepsOutput = new Tuple<string, int>[16];
 
-            // Коэффициент "c" - константа, обеспечивающая разнообразие последовательности
-            const ulong c = 1;
+            for (int i = 0; i < 16; i++)
+            {
+                int newBit = Shift();
+                output = (output << 1) | newBit;
+                stepsOutput[i] = Tuple.Create(Convert.ToString(register, 2).PadLeft(7, '0'), newBit);
+            }
 
-            // Модуль "m" - определяет период последовательности; должен быть степенью 2 для обеспечения равномерного распределения
-            const ulong m = 1 << 16;
+            return Tuple.Create(output, stepsOutput);
+        }
+    }
 
-            // Рассчитываем новое состояние с использованием конгруэнтного генератора
-            state = (a * state + c) % m;
+    class LinearCongruentialGenerator
+    {
+        private int state;
+        private int a;
+        private int b;
 
-            // Возвращаем новое состояние
+        public LinearCongruentialGenerator(int seed, int a = 1664525, int b = 1013904223)
+        {
+            state = seed;
+            this.a = a;
+            this.b = b;
+        }
+
+        public int Next()
+        {
+            state = (int)((state * (long)a + b) % Math.Pow(2, 16));
             return state;
         }
 
-        // Шифрование текста
-        static string Encrypt(string plaintext, ushort firstStageRegister, ulong secondStageState)
+        public string GammaGenerate(int length)
         {
-            char[] encryptedText = new char[plaintext.Length];
-
-            for (int i = 0; i < plaintext.Length; i++)
+            string gamma = "";
+            while (gamma.Length < length)
             {
-                // Генерация гаммы
-                ulong gamma = CongruentialGenerator(secondStageState);
-
-                // XOR операция для шифрования
-                char encryptedChar = (char)(plaintext[i] ^ (char)gamma);
-
-                // Обновление состояний для следующей итерации
-                firstStageRegister = (ushort)(((firstStageRegister << 1) | ((firstStageRegister & 0x4000) >> 14)) & 0x7FFF);
-                secondStageState = CongruentialGenerator(secondStageState);
-
-                encryptedText[i] = encryptedChar;
-
-                // Вывод состояний для отладки
-                Console.WriteLine($"Шаг {i + 1}: Gamma = {gamma}\nFirst Stage Register = {ToBinaryString(firstStageRegister)}\nSecond Stage State   = {ToBinaryString(secondStageState)}");
+                int nextValue = Next();
+                Console.WriteLine($"Текущее состояние LCG: десятичное: {nextValue}, двоичный: {Convert.ToString(nextValue, 2).PadLeft(16, '0')}");
+                gamma += Convert.ToString(nextValue, 2).PadLeft(16, '0');
             }
-
-            return new string(encryptedText);
-        }
-
-        // Расшифрование текста
-        static string Decrypt(string ciphertext, ushort firstStageRegister, ulong secondStageState)
-        {
-            // Дешифрование идентично шифрованию
-            return Encrypt(ciphertext, firstStageRegister, secondStageState);
-        }
-
-        // Преобразование числа в строку бинарного представления
-        static string ToBinaryString(ulong value)
-        {
-            return Convert.ToString((long)value, 2).PadLeft(16, '0');
-        }
-
-        // Преобразование строки в бинарное представление
-        static string StringToBinary(string text)
-        {
-            string binaryString = "";
-            foreach (char c in text)
-            {
-                binaryString += Convert.ToString(c, 2).PadLeft(8, '0');
-            }
-            return binaryString.Trim();
+            return gamma.Substring(0, length);
         }
     }
+
+    class Program
+    {
+        static string TextToBinary(string text)
+        {
+            char[] charArray = text.ToCharArray();
+            string binary = "";
+            foreach (char c in charArray)
+            {
+                binary += Convert.ToString(c, 2).PadLeft(8, '0');
+            }
+            return binary;
+        }
+
+        static string BinaryToText(string binary)
+        {
+            int numOfBytes = binary.Length / 8;
+            byte[] byteArray = new byte[numOfBytes];
+            for (int i = 0; i < numOfBytes; i++)
+            {
+                byteArray[i] = Convert.ToByte(binary.Substring(i * 8, 8), 2);
+            }
+            return System.Text.Encoding.ASCII.GetString(byteArray);
+        }
+
+        static string Encrypt(string messageBinary, string gamma)
+        {
+            char[] encryptedChars = new char[messageBinary.Length];
+            for (int i = 0; i < messageBinary.Length; i++)
+            {
+                encryptedChars[i] = (messageBinary[i] != gamma[i]) ? '1' : '0';
+            }
+            return new string(encryptedChars);
+        }
+
+        static string Decrypt(string encryptedBinary, string gamma)
+        {
+            return Encrypt(encryptedBinary, gamma);
+        }
+
+        static void Main()
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.Write("Введите исходное сообщение: ");
+            string message = Console.ReadLine();
+            string messageBinary = TextToBinary(message);
+
+            Console.WriteLine("Исходное сообщение в бинарном виде: " + messageBinary);
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+
+            LFSR lfsr = new LFSR();
+            string initialLFSRState = Convert.ToString(lfsr.Generate16Bits().Item1, 2).PadLeft(16, '0');
+            Console.WriteLine("Начальное состояние LSFR: " + initialLFSRState);
+
+            Tuple<int, Tuple<string, int>[]> lfsrOutput = lfsr.Generate16Bits();
+            Console.WriteLine("Первая ступень:");
+            foreach (var step in lfsrOutput.Item2)
+            {
+                Console.WriteLine($"Регистр: {step.Item1}, Новый бит: {step.Item2}");
+            }
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+
+            LinearCongruentialGenerator lcg = new LinearCongruentialGenerator(0);
+            lcg.Next();
+            lcg.GammaGenerate(messageBinary.Length);
+
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+
+            string gamma = lcg.GammaGenerate(messageBinary.Length);
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+
+            string encryptedMessageBinary = Encrypt(messageBinary, gamma);
+            string encryptedMessage = BinaryToText(encryptedMessageBinary);
+
+            for (int i = 0; i < messageBinary.Length; i += 8)
+            {
+                string messageBlock = messageBinary.Substring(i, 8);
+                string gammaBlock = gamma.Substring(i, 8);
+                string encryptedBlock = Encrypt(messageBlock, gammaBlock);
+                char encryptedChar = BinaryToText(encryptedBlock)[0];
+                Console.WriteLine($"Блок сообщения: {messageBlock}, Гамма блок: {gammaBlock}, Зашифрованный блок: {encryptedBlock}, Зашифрованный символ: {encryptedChar}");
+            }
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+
+            Console.WriteLine("Гамма: " + gamma);
+            Console.WriteLine("Исходное сообщение в бинарном виде: " + messageBinary);
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+
+            encryptedMessageBinary = Encrypt(messageBinary, gamma);
+            encryptedMessage = BinaryToText(encryptedMessageBinary);
+            Console.WriteLine("Зашифрованное сообщение (символьный): " + encryptedMessage);
+            Console.WriteLine("Зашифрованное сообщение (двоичный): " + encryptedMessageBinary);
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+
+            string decryptedMessageBinary = Decrypt(encryptedMessageBinary, gamma);
+            string decryptedMessage = BinaryToText(decryptedMessageBinary);
+            Console.WriteLine("Расшифрованное сообщение (символьный): " + decryptedMessage);
+            Console.WriteLine("Расшифрованное сообщение (двоичный): " + decryptedMessageBinary);
+            Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
+        }
+    }
+
 
 
 }
