@@ -12,6 +12,12 @@ namespace Lr3
         static char[] alphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ .-".ToCharArray();
         static int M = alphabet.Length;
 
+
+        /// <summary>
+        /// 36 символов (А…Я, пробел, «.», «-» )
+        /// 3)	аффинная система подстановок Цезаря
+        /// A (сомножитель)
+        /// </summary>
         static void Main()
         {
             string plaintext = File.ReadAllText("text.txt", Encoding.UTF8).ToUpper();

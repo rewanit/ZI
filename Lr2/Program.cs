@@ -4,6 +4,12 @@
 
     class Program
     {
+
+        /// <summary>
+        /// Зашифровать и расшифровать англоязычное сообщение, содержащее пробелы (длина алфавита 27), 
+        /// с помощью шифра Вижинера. Реализовать тройное шифрование с двумя разными ключевыми словами 
+        /// (зашифровать с первым ключом, затем применить операцию расшифрования со вторым ключом и снова зашифровать с первым ключом). 
+        /// </summary>
         static void Main()
         {
             Console.WriteLine("Введите сообщение для шифрования:");
@@ -36,7 +42,7 @@
             Console.WriteLine($"повторно зашифрованное сообщение: {reEncryptedWithSecondKeyword}");
             Console.WriteLine($"Полностью расшифрованное сообщение: {fullyDecryptedMessage}");
         }
-        static char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ".ToCharArray();
+        static char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ".ToUpper().ToCharArray();
 
         static string Encrypt(string message, string keyword)
         {
