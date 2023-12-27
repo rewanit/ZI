@@ -20,7 +20,7 @@ namespace Lr3
         /// </summary>
         static void Main()
         {
-            string plaintext = File.ReadAllText("text.txt", Encoding.UTF8).ToUpper();
+            string plaintext = File.ReadAllText("text.txt").ToUpper().Trim().Replace("\n","").Replace("\t", "");
             Console.WriteLine("Длинна словаря: "+M);
             Console.WriteLine("Введите значение A для ключа шифрования (целое число):");
             int A = int.Parse(Console.ReadLine());
@@ -107,7 +107,7 @@ namespace Lr3
                     int encryptedIndex = ((A * index) + K) % M;
                     result.Append(alphabet[encryptedIndex]);
                 }
-            }
+                }
 
             return result.ToString();
         }
@@ -125,7 +125,7 @@ namespace Lr3
                     int decryptedIndex = (ModularMultiplicativeInverse(A, M) * (index - K + M)) % M;
                     result.Append(alphabet[decryptedIndex]);
                 }
-            }
+                }
 
             return result.ToString();
         }
@@ -150,7 +150,7 @@ namespace Lr3
                     // Вычисление степени расхождения статистики
                     double W = CalculateW(decryptedText);
 
-                    // Если текущее значение W меньше минимального, обновляем ключи и минимальное значение W
+                        // Если текущее значение W меньше минимального, обновляем ключи и минимальное значение W
                     if (W < minW)
                     {
                         minW = W;
@@ -165,7 +165,8 @@ namespace Lr3
 
                 // Отображение прогресса
             }
-
+            Console.WriteLine();
+            Console.WriteLine(minW);
             // Завершение отображения прогресса
         }
 
@@ -206,38 +207,40 @@ namespace Lr3
         
         static Dictionary<char, double> letterFrequenciesInRussian = new Dictionary<char, double>
         {
-             { ' ', 0.175 },
-            { 'О', 0.090 },
-            { 'Е', 0.072 },
             { 'А', 0.062 },
-            { 'И', 0.062 },
-            { 'Н', 0.053 },
-            { 'Т', 0.053 },
-            { 'С', 0.045 },
-            { 'Р', 0.040 },
-            { 'В', 0.038 },
-            { 'Л', 0.035 },
-            { 'К', 0.028 },
-            { 'М', 0.026 },
-            { 'Д', 0.025 },
-            { 'П', 0.023 },
-            { 'У', 0.021 },
-            { 'Я', 0.018 },
-            { 'Ы', 0.016 },
-            { 'З', 0.016 },
-            { 'Ь', 0.014 },
             { 'Б', 0.014 },
+            { 'В', 0.038 },
             { 'Г', 0.013 },
-            { 'Ч', 0.012 },
-            { 'Й', 0.010 },
-            { 'Х', 0.009 },
+            { 'Д', 0.025 },
+            { 'Е', 0.072 },
+            { 'Ё', 0.072 },
             { 'Ж', 0.007 },
-            { 'Ю', 0.006 },
-            { 'Ш', 0.006 },
+            { 'З', 0.016 },
+            { 'И', 0.062 },
+            { 'Й', 0.010 },
+            { 'К', 0.028 },
+            { 'Л', 0.035 },
+            { 'М', 0.026 },
+            { 'Н', 0.053 },
+            { 'О', 0.090 },
+            { 'П', 0.023 },
+            { 'Р', 0.040 },
+            { 'С', 0.045 },
+            { 'Т', 0.053 },
+            { 'У', 0.021 },
+            { 'Ф', 0.002 },
+            { 'Х', 0.009 },
             { 'Ц', 0.004 },
+            { 'Ч', 0.012 },
+            { 'Ш', 0.006 },
             { 'Щ', 0.003 },
+            { 'Ъ', 0.014 },
+            { 'Ы', 0.016 },
+            { 'Ь', 0.014 },
             { 'Э', 0.003 },
-            { 'Ф', 0.002 }
+            { 'Ю', 0.006 },
+            { 'Я', 0.018 },
+            { ' ', 0.175 }
         };
 
         static double CalculateW(string text)
