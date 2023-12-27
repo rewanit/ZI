@@ -14,7 +14,7 @@
         public LFSR()
         {
             Random random = new Random();
-            register = random.Next(128); // 2^7 for 7-bit register
+            register = random.Next(1,128); // 2^7 for 7-bit register
         }
 
         public int Shift()
@@ -95,13 +95,20 @@
             }
             return System.Text.Encoding.ASCII.GetString(byteArray);
         }
-
         static string Encrypt(string messageBinary, string gamma)
         {
             char[] encryptedChars = new char[messageBinary.Length];
+            bool[] xorMask = new bool[] { false, true, true, true, true, true, true, true };
             for (int i = 0; i < messageBinary.Length; i++)
             {
-                encryptedChars[i] = (messageBinary[i] != gamma[i]) ? '1' : '0';
+                if (xorMask[i % 8])
+                {
+                    encryptedChars[i] = ((messageBinary[i] != gamma[i])) ? '1' : '0';
+                }
+                else
+                {
+                    encryptedChars[i] = messageBinary[i];
+                }
             }
             return new string(encryptedChars);
         }
@@ -113,9 +120,9 @@
 
         /// <summary>
         /// Реализовать двухступенчатый генератор псевдослучайных чисел. 
-        /// Первая ступень – 7-разрядный линейный сдвиговый регистр генерирует 16 двоичных разрядов. 
+        /// Первая ступень – 7-разрядный линейный сдвиговый регистр генерирует 16 двоичных разрядов. +
         /// Они являются стартовым значением для второй ступени. 
-        /// Вторая ступень – конгруэнтный генератор с модулем 2^16. 
+        /// Вторая ступень – конгруэнтный генератор с модулем 2^16. + 
         /// Конгруэнтный генератор на основе значения, полученного из первой ступени, 
         /// генерирует фрагмент гаммы шифра длиной 64 бита, а затем передает управление первой ступени, 
         /// и процесс циклически повторяется. 
@@ -137,19 +144,20 @@
 
             Tuple<int, Tuple<string, int>[]> lfsrOutput = lfsr.Generate16Bits();
             Console.WriteLine("Первая ступень:");
+            int l = 1;
             foreach (var step in lfsrOutput.Item2)
             {
-                Console.WriteLine($"Регистр: {step.Item1}, Новый бит: {step.Item2}");
+                Console.WriteLine($"{l++.ToString().PadLeft(2,'0')} Регистр: {step.Item1}, Новый бит: {step.Item2}");
             }
             Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
 
-            LinearCongruentialGenerator lcg = new LinearCongruentialGenerator(0);
+            LinearCongruentialGenerator lcg = new LinearCongruentialGenerator(123456);
             lcg.Next();
-            lcg.GammaGenerate(messageBinary.Length);
+            lcg.GammaGenerate( (int)Math.Ceiling((double)messageBinary.Length /(double)64)*64);
 
             Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
 
-            string gamma = lcg.GammaGenerate(messageBinary.Length);
+            string gamma = lcg.GammaGenerate((int)Math.Ceiling((double)messageBinary.Length / (double)64) * 64);
             Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
 
             string encryptedMessageBinary = Encrypt(messageBinary, gamma);
@@ -175,7 +183,9 @@
             Console.WriteLine("Зашифрованное сообщение (двоичный): " + encryptedMessageBinary);
             Console.WriteLine("-----------------------------------------------------------------------------------------------------------");
 
-            string decryptedMessageBinary = Decrypt(encryptedMessageBinary, gamma);
+            var encryptedMessageBinary2 = TextToBinary(encryptedMessage);
+
+            string decryptedMessageBinary = Decrypt(encryptedMessageBinary2, gamma);
             string decryptedMessage = BinaryToText(decryptedMessageBinary);
             Console.WriteLine("Расшифрованное сообщение (символьный): " + decryptedMessage);
             Console.WriteLine("Расшифрованное сообщение (двоичный): " + decryptedMessageBinary);
